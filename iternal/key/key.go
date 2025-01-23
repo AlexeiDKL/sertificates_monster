@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"log"
 
 	"dkl.dklsa.certificates_monster/iternal/file"
@@ -22,6 +23,7 @@ func GetPrivateKey(path string) (*rsa.PrivateKey, error) {
 		stringPrivateKey := ReadPrivateKey(path)
 		return stringPrivateKey, nil
 	}
+	fmt.Println(path, "not found")
 	// генерируем новый приватный ключ и сохраняем его в указанный путь
 	privateKey, err := CreatePrivateKey()
 	if err != nil {
@@ -65,6 +67,5 @@ func WritePrivateKey(key *rsa.PrivateKey, path string) (err error) {
 			Bytes: x509.MarshalPKCS1PrivateKey(key),
 		},
 	)
-	log.Println(pemdataPrivateKey)
-	return file.SaveFile(string(pemdataPrivateKey), path)
+	return file.SaveFile(path, string(pemdataPrivateKey))
 }

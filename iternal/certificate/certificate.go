@@ -2,10 +2,15 @@ package certificate
 
 import "crypto/rsa"
 
-func CreateCertificate(publicKey *rsa.PublicKey) (string, error) {
+func CreateCertificate(phrase string, publicKey *rsa.PublicKey) (string, error) {
 	// создание сертификата
-	// получаем любую не задейственную фразу на сервере
 	// формируем сертификат с помощью полученной фразы и публичного ключа
 	// возращаем сертификат
 	return "", nil // заменить на реальное создание сертификата
+}
+
+func SaveCertificate(certificate string) error {
+	// сохранение сертификата в базу
+
+	return nil
 }

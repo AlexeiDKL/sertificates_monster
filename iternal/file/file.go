@@ -70,11 +70,11 @@ func CopyFile(from, to string) (int64, error) {
 }
 
 func SaveFile(path string, text string) error {
-	log.Println(path)
+	fmt.Println(path)
 	file, err := os.Create(path)
 
 	if err != nil {
-		log.Println("Unable to create file:", err)
+		fmt.Println("Unable to create file:", err)
 		return err
 	}
 	defer file.Close()

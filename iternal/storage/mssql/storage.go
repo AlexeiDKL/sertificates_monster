@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"log"
 	"net/url"
 	"strconv"
 
@@ -13,11 +12,12 @@ import (
 )
 
 const (
-	selectNullFilter = "SELECT * FROM Partners;"
+	selectNullFilter   = "SELECT * FROM Partners;"
+	selectPhraseFilter = "select * from Phrases where Used = 'false';"
 )
 
 var (
-	debug         = flag.Bool("debug", true, "enable debugging")
+	debug         = flag.Bool("debug", false, "enable debugging")
 	password      = flag.String("password", "Hello2025_", "the database password")
 	port     *int = flag.Int("port", 1433, "the database port")
 	server        = flag.String("server", "DESKTOP-1LPEPB6", "the database server")
@@ -44,7 +44,7 @@ func makeConnURL() *url.URL {
 	}
 }
 
-func bd() {
+func bd() (*sql.DB, error) {
 	connString := makeConnURL().String()
 	if *debug {
 		fmt.Printf(" connString:%s\n", connString)
@@ -52,24 +52,45 @@ func bd() {
 
 	connector, err := mssql.NewConnector(connString)
 	if err != nil {
-		log.Println(err)
-		return
+		return nil, err
 	}
 
 	connector.SessionInitSQL = "SET ANSI_NULLS ON"
 	db := sql.OpenDB(connector)
-	defer db.Close()
 
+	return db, nil
+}
+
+func GetPhrase() (string, error) {
+	// подключаемся к бд
+	// селект к таблице Phrases
+	// возвращаем первую фразу у которой поле Used = false
+
+	db, err := bd()
+	if err != nil {
+		return "", err
+	}
+	defer db.Close()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var name, inn string
+	var phrase, used string
 	var id int
-	rows := db.QueryRowContext(ctx, selectNullFilter)
-	err = rows.Scan(&id, &name, &inn)
+	rows := db.QueryRowContext(ctx, selectPhraseFilter)
+	err = rows.Scan(&id, &phrase, &used)
 	if err != nil {
-		log.Println(err)
-		return
+		return "", err
 	}
-	fmt.Printf("ID: %d, Name: %s, INN: %s\n", id, name, inn)
+	fmt.Printf("ID: %d, Phrase: %s, Used: %s\n", id, phrase, used)
+	return phrase, nil
+}
+
+func SaveCertificate(phrase, certificate string) error {
+	// подключаемся к бд
+	// селект к таблице Phrases в которой phrase = phrase
+	// если в поле Used = false нет ни одной записи,
+	// меняем поле Used = true у текущей записи
+	// и сохраняем изменения
+
+	return nil
 }

@@ -5,31 +5,37 @@ import (
 
 	"dkl.dklsa.certificates_monster/iternal/certificate"
 	"dkl.dklsa.certificates_monster/iternal/key"
+	storage "dkl.dklsa.certificates_monster/iternal/storage/mssql"
 )
 
-func certifcate(path string) {
+func Certifcate(path string) (string, error) {
 	// получаем publik key
+	// получаем фразу
 	// создаем сертификат
 	// сохраняем сертификат в базу
 	// возвращаем сертификат
 	privateKey, err := key.GetPrivateKey(path)
 	if err != nil {
-		fmt.Println("Error creating private key:", err.Error())
-		return
+		return "",
+			fmt.Errorf("Error creating private key: %s", err.Error())
 	}
-	fmt.Println("Private key created!")
-	publicKey := key.CreatePublicKeys(*privateKey)
 
-	certificate, err := certificate.CreateCertificate(&publicKey)
+	publicKey := key.CreatePublicKeys(*privateKey)
+	phrase, err := storage.GetPhrase()
 	if err != nil {
-		fmt.Println("Error creating certificate:", err.Error())
-		return
+		return "", fmt.Errorf("Error getting phrase: %s", err.Error())
 	}
-	err = database.SaveCertificate(certificate)
+
+	certificate, err := certificate.CreateCertificate(phrase, &publicKey)
 	if err != nil {
-		fmt.Println("Error saving certificate:", err.Error())
-		return
+		return "",
+			fmt.Errorf("Error creating certificate: %s", err.Error())
+	}
+	err = storage.SaveCertificate(phrase, certificate)
+	if err != nil {
+		return "",
+			fmt.Errorf("Error saving certificate: %s", err.Error())
 	}
 	fmt.Println("Certificate created and saved!")
-	return
+	return certificate, nil
 }

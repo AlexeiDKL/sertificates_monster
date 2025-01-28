@@ -1,12 +1,14 @@
-package key
+package cryptoKey
 
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"log"
+
+	// "log"
 
 	"dkl.dklsa.certificates_monster/iternal/file"
 )
@@ -27,13 +29,12 @@ func GetPrivateKey(path string) (*rsa.PrivateKey, error) {
 	// генерируем новый приватный ключ и сохраняем его в указанный путь
 	privateKey, err := CreatePrivateKey()
 	if err != nil {
-		log.Println("Create PrivateKey Error: ", err)
-		return nil, err
+		return nil, fmt.Errorf("Create PrivateKey Error: %s", err)
 	}
 	err = WritePrivateKey(privateKey, path)
 	if err != nil {
-		log.Println("WritePrivateKey Error: ", err)
-		return nil, err
+		return nil,
+			fmt.Errorf("WritePrivateKey Error: %s", err)
 	}
 	return privateKey, nil
 }
@@ -53,7 +54,7 @@ func CreatePublicKeys(key rsa.PrivateKey) rsa.PublicKey {
 
 func ReadPrivateKey(path string) *rsa.PrivateKey {
 	key := file.GetTextInFile(path)
-	log.Println(key)
+	// log.Println(key)
 	block, _ := pem.Decode([]byte(key))
 	keyss, _ := x509.ParsePKCS1PrivateKey(block.Bytes)
 
@@ -68,4 +69,20 @@ func WritePrivateKey(key *rsa.PrivateKey, path string) (err error) {
 		},
 	)
 	return file.SaveFile(path, string(pemdataPrivateKey))
+}
+
+func EncryptWithPublicKey(text string, publicKey *rsa.PublicKey) (string, error) {
+	rng := rand.Reader
+	labels := []byte("")
+	ciphertext, err := rsa.EncryptOAEP(sha256.New(), rng, publicKey, []byte(text), labels)
+
+	return string(ciphertext), err
+}
+
+func DecryptWithPrivateKey(text string, privateKey *rsa.PrivateKey) (string, error) {
+	rng := rand.Reader
+	labels := []byte("")
+	plaintext, err := rsa.DecryptOAEP(sha256.New(), rng, privateKey, []byte(text), labels)
+
+	return string(plaintext), err
 }

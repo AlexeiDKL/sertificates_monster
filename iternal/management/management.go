@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"dkl.dklsa.certificates_monster/iternal/certificate"
-	"dkl.dklsa.certificates_monster/iternal/key"
+	"dkl.dklsa.certificates_monster/iternal/cryptoKey"
 	storage "dkl.dklsa.certificates_monster/iternal/storage/mssql"
 )
 
@@ -14,13 +14,13 @@ func Certifcate(path string) (string, error) {
 	// создаем сертификат
 	// сохраняем сертификат в базу
 	// возвращаем сертификат
-	privateKey, err := key.GetPrivateKey(path)
+	privateKey, err := cryptoKey.GetPrivateKey(path)
 	if err != nil {
 		return "",
 			fmt.Errorf("Error creating private key: %s", err.Error())
 	}
 
-	publicKey := key.CreatePublicKeys(*privateKey)
+	publicKey := cryptoKey.CreatePublicKeys(*privateKey)
 	phrase, err := storage.GetPhrase()
 	if err != nil {
 		return "", fmt.Errorf("Error getting phrase: %s", err.Error())

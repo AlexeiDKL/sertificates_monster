@@ -22,7 +22,6 @@ func main() {
 		fmt.Println("phrase error: ", err)
 		return
 	}
-	fmt.Println(phrase)
 
 	PKeys, err := cryptoKey.GetPrivateKey("key.secret")
 	if err != nil {
@@ -36,8 +35,6 @@ func main() {
 	}
 
 	rr, err := cryptoKey.DecryptWithPrivateKey(certificate, PKeys)
-
-	fmt.Println(phrase, []byte(certificate))
 
 	if err != nil {
 		fmt.Println("decrypt error: ", err)

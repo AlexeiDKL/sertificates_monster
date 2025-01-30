@@ -15,6 +15,13 @@ import (
 	mssql "github.com/denisenkom/go-mssqldb"
 )
 
+type Phrase struct {
+	Id        int    `json:"id"`
+	Phrase    string `json:"phrase"`
+	Used      bool   `json:"used"`
+	TotalRows int    `json:"total_rows"`
+}
+
 const (
 	selectNullFilter   = "SELECT * FROM Partners;"
 	selectPhraseFilter = "SELECT Id, Phrase, Used, (select COUNT(*) FROM Phrases where Used='false') as total_rows FROM Phrases where Used='false';"
@@ -25,7 +32,7 @@ var (
 	debug                     = flag.Bool("debug", false, "enable debugging")
 	password                  = flag.String("password", "Hello2025_", "the database password")
 	port                 *int = flag.Int("port", 1433, "the database port")
-	server                    = flag.String("server", "DESKTOP-6LQKT1U", "the database server")
+	server                    = flag.String("server", "DESKTOP-1LPEPB6", "the database server")
 	user                      = flag.String("user", "user", "the database user")
 	numberOfSparePhrases *int = flag.Int("numberOfSparePhrases", 5, "number of spare phrases")
 )
@@ -52,7 +59,7 @@ func makeConnURL() *url.URL {
 	}
 }
 
-func bd() (*sql.DB, error) {
+func BD() (*sql.DB, error) {
 	connString := makeConnURL().String()
 	if *debug {
 		fmt.Printf(" connString:%s\n", connString)
@@ -70,11 +77,7 @@ func bd() (*sql.DB, error) {
 }
 
 func GetPhrase() (string, error) {
-	// подключаемся к бд
-	// селект к таблице Phrases
-	// возвращаем первую фразу у которой поле Used = false
-
-	db, err := bd()
+	db, err := BD()
 	if err != nil {
 		return "", err
 	}
@@ -82,10 +85,10 @@ func GetPhrase() (string, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var phrase, used string
-	var id, count int
+	var phraseStruct Phrase
+
 	rows := db.QueryRowContext(ctx, selectPhraseFilter)
-	err = rows.Scan(&id, &phrase, &used, &count)
+	err = rows.Scan(&phraseStruct.Id, &phraseStruct.Phrase, &phraseStruct.Used, &phraseStruct.TotalRows)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// InsertPhrases(count)
@@ -96,15 +99,15 @@ func GetPhrase() (string, error) {
 		}
 		return "", err
 	}
-	fmt.Printf("ID: %d, Phrase: %s, Used: %s, Count: %d \n", id, phrase, used, count)
-	if count < *numberOfSparePhrases {
+	fmt.Printf("ID: %d, Phrase: %s, Used: %t, Count: %d \n", phraseStruct.Id, phraseStruct.Phrase, phraseStruct.Used, phraseStruct.TotalRows)
+	if phraseStruct.TotalRows < *numberOfSparePhrases {
 		InsertPhrases(*numberOfSparePhrases * 2)
 	}
-	return phrase, nil
+	return phraseStruct.Phrase, nil
 }
 
 func SavePhrase(phrase string) error {
-	db, err := bd()
+	db, err := BD()
 	if err != nil {
 		return fmt.Errorf("error creating database: %v", err)
 	}
@@ -145,9 +148,7 @@ func InsertPhrase(n int) error {
 		return fmt.Errorf("empty phrase")
 	}
 
-	fmt.Printf("creating new phrases: %d \n", n)
-
-	db, err := bd()
+	db, err := BD()
 	if err != nil {
 		return fmt.Errorf("error creating database: %v", err)
 	}
@@ -163,7 +164,6 @@ func InsertPhrase(n int) error {
 		} else {
 			prepare = fmt.Sprintf(prepare, phrase, used, ",('%s','%s')%s")
 		}
-		fmt.Println(prepare)
 	}
 
 	stmt, err := db.Prepare(prepare)

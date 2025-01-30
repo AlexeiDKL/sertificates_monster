@@ -70,7 +70,6 @@ func CopyFile(from, to string) (int64, error) {
 }
 
 func SaveFile(path string, text string) error {
-	fmt.Println(path)
 	file, err := os.Create(path)
 
 	if err != nil {

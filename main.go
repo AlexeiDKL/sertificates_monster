@@ -5,17 +5,19 @@ import (
 	"reflect"
 
 	"dkl.dklsa.certificates_monster/iternal/certificate"
+	"dkl.dklsa.certificates_monster/iternal/config"
 	"dkl.dklsa.certificates_monster/iternal/cryptoKey"
+	"dkl.dklsa.certificates_monster/iternal/logger"
 	storage "dkl.dklsa.certificates_monster/iternal/storage/mssql"
 )
 
-func initConfig() {}
-
-func initLogger() {}
+func initializing() {
+	config.Init()
+	logger.Init()
+}
 
 func main() {
-	initConfig()
-	initLogger()
+	initializing()
 
 	phrase, err := storage.GetPhrase()
 	if err != nil {

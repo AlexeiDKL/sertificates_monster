@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	config "dkl.dklsa.certificates_monster/iternal/config"
 	mssql "github.com/denisenkom/go-mssqldb"
 )
 
@@ -28,40 +29,31 @@ const (
 	insertPhraseFilter = "INSERT INTO Phrases (Phrase, Used) VALUES ('%s','%s')%s"
 )
 
-var (
-	debug                     = flag.Bool("debug", false, "enable debugging")
-	password                  = flag.String("password", "Hello2025_", "the database password")
-	port                 *int = flag.Int("port", 1433, "the database port")
-	server                    = flag.String("server", "DESKTOP-1LPEPB6", "the database server")
-	user                      = flag.String("user", "user", "the database user")
-	numberOfSparePhrases *int = flag.Int("numberOfSparePhrases", 5, "number of spare phrases")
-)
-
 var WG sync.WaitGroup
 
 func makeConnURL() *url.URL {
 	flag.Parse()
-	if *debug {
-		fmt.Printf(" password:%s\n", *password)
-		fmt.Printf(" port:%d\n", *port)
-		fmt.Printf(" server:%s\n", *server)
-		fmt.Printf(" user:%s\n", *user)
+	if config.Config.Logger.Level == "DEBUG" {
+		fmt.Printf(" password:%s\n", config.Config.Storages.Password)
+		fmt.Printf(" port:%d\n", config.Config.Storages.Port)
+		fmt.Printf(" server:%s\n", config.Config.Storages.Server)
+		fmt.Printf(" user:%s\n", config.Config.Storages.User)
 	}
 
 	var userInfo *url.Userinfo
-	if *user != "" {
-		userInfo = url.UserPassword(*user, *password)
+	if config.Config.Storages.User != "" {
+		userInfo = url.UserPassword(config.Config.Storages.User, config.Config.Storages.Password)
 	}
 	return &url.URL{
 		Scheme: "sqlserver",
-		Host:   *server + ":" + strconv.Itoa(*port),
+		Host:   config.Config.Storages.Server + ":" + strconv.Itoa(config.Config.Storages.Port),
 		User:   userInfo,
 	}
 }
 
 func BD() (*sql.DB, error) {
 	connString := makeConnURL().String()
-	if *debug {
+	if config.Config.Logger.Level == "DEBUG" {
 		fmt.Printf(" connString:%s\n", connString)
 	}
 
@@ -94,14 +86,14 @@ func GetPhrase() (string, error) {
 			// InsertPhrases(count)
 			phrase := CreatePhrase()
 			SavePhrase(phrase)
-			InsertPhrases(*numberOfSparePhrases * 2)
+			InsertPhrases(config.Config.Storages.NumberOfSparePhrases * 2)
 			return phrase, nil
 		}
 		return "", err
 	}
 	fmt.Printf("ID: %d, Phrase: %s, Used: %t, Count: %d \n", phraseStruct.Id, phraseStruct.Phrase, phraseStruct.Used, phraseStruct.TotalRows)
-	if phraseStruct.TotalRows < *numberOfSparePhrases {
-		InsertPhrases(*numberOfSparePhrases * 2)
+	if phraseStruct.TotalRows < config.Config.Storages.NumberOfSparePhrases {
+		InsertPhrases(config.Config.Storages.NumberOfSparePhrases * 2)
 	}
 	return phraseStruct.Phrase, nil
 }

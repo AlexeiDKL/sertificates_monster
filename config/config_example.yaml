@@ -2,13 +2,18 @@ env: "local"
 storages:
   server: ""
   user: ""
+  port: 1433
   password: ""
   numberOfSparePhrases: 5
-  port: 1433
 
 http_server:
-  address: ":8080"
+  adress: "localhost"
+  port: 8080
   read_timeout: 4s
   idle_timeout: 60s
 keys:
   path: ""
+logger: 
+  path: "./log/"
+  type: ".log"
+  level: "DEBUG"

@@ -2,6 +2,8 @@ package logger
 
 import (
 	"fmt"
+	"log/slog"
+	"os"
 	"time"
 
 	"dkl.dklsa.certificates_monster/iternal/config"
@@ -21,5 +23,10 @@ func Init() {
 	path := fmt.Sprintf("%s%s%s", pathLog, name, logType)
 	fmt.Println("Initializing logger...")
 	fmt.Println(path)
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		slog.Error(err.Error())
+	}
+	slog.NewJSONHandler(f, nil)
 	// todo: log
 }
